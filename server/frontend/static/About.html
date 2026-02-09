@@ -1,68 +1,112 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us - Best Cars Dealership</title>
+
   <!-- Link the style sheet here -->
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
 </head>
-<div>
-  <nav class="navbar navbar-expand-lg navbar-light" style="background-color:darkturquoise; height: 1in;">
-    <div class="container-fluid">
-      <h2 style="padding-right: 5%;">Dealerships</h2>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarText">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" style="font-size: larger;" aria-current="page" href="/">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" style="font-size: larger;" href="/about">About Us</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" style="font-size: larger;" href="/contact">Contact Us</a>
-          </li>
+
+<body>
+  <div>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color:darkturquoise; height: 1in;">
+      <div class="container-fluid">
+        <h2 style="padding-right: 5%;">Dealerships</h2>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
+          aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" style="font-size: larger;" aria-current="page" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" style="font-size: larger;" href="/about">About Us</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" style="font-size: larger;" href="/contact">Contact Us</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="card shadow-sm" style="width: 80%; margin: auto; margin-top: 5%;">
+      <div class="banner p-4" name="about-header">
+        <h1 class="mb-2">About Us</h1>
+        <p class="mb-2">
+          Welcome to Best Cars dealership, home to the best cars in North America. We deal in selling domestic and
+          imported cars at reasonable prices.
+        </p>
+        <p class="mb-0">
+          Since 2008, Best Cars has helped drivers find reliable vehicles with transparent pricing, flexible financing,
+          and service teams you can trust. Our mission is simple: make buying and owning a car easy, honest, and
+          enjoyable—no pressure, no surprises.
+        </p>
+      </div>
+
+      <div class="p-4">
+        <h3 class="mb-3">Leadership Team</h3>
+
+        <div style="display: flex; flex-direction: row; gap: 16px; justify-content: space-between; flex-wrap: wrap;">
+          <!-- Leader 1 -->
+          <div class="card" style="width: 32%; min-width: 240px;">
+            <img class="card-img-top" src="/static/person.png" alt="Headshot - Maya Thompson">
+            <div class="card-body">
+              <p class="title mb-1"><strong>Maya Thompson</strong></p>
+              <p class="mb-2">Chief Executive Officer (CEO)</p>
+              <p class="card-text">
+                Maya leads Best Cars’ nationwide growth strategy and customer experience initiatives. She has 15+ years
+                of automotive retail leadership and focuses on transparency and trust.
+              </p>
+              <p class="mb-0"><a href="mailto:maya.thompson@bestcarsdealership.com">maya.thompson@bestcarsdealership.com</a></p>
+            </div>
+          </div>
+
+          <!-- Leader 2 -->
+          <div class="card" style="width: 32%; min-width: 240px;">
+            <img class="card-img-top" src="/static/person.png" alt="Headshot - Jordan Rivera">
+            <div class="card-body">
+              <p class="title mb-1"><strong>Jordan Rivera</strong></p>
+              <p class="mb-2">VP, Sales & Operations</p>
+              <p class="card-text">
+                Jordan oversees dealership operations across all states, ensuring consistent service and fair pricing.
+                He specializes in training, performance coaching, and process improvement.
+              </p>
+              <p class="mb-0"><a href="mailto:jordan.rivera@bestcarsdealership.com">jordan.rivera@bestcarsdealership.com</a></p>
+            </div>
+          </div>
+
+          <!-- Leader 3 -->
+          <div class="card" style="width: 32%; min-width: 240px;">
+            <img class="card-img-top" src="/static/person.png" alt="Headshot - Priya Desai">
+            <div class="card-body">
+              <p class="title mb-1"><strong>Priya Desai</strong></p>
+              <p class="mb-2">Director, Customer Success</p>
+              <p class="card-text">
+                Priya leads customer support and service partnerships to ensure every buyer feels supported after
+                purchase. She champions fast issue resolution and proactive communication.
+              </p>
+              <p class="mb-0"><a href="mailto:priya.desai@bestcarsdealership.com">priya.desai@bestcarsdealership.com</a></p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <h3 class="mb-2">Our Values</h3>
+        <ul class="mb-0">
+          <li><strong>Transparency:</strong> Clear pricing and honest reviews.</li>
+          <li><strong>Quality:</strong> Reliable vehicles and strong inspection standards.</li>
+          <li><strong>Service:</strong> Helpful support before and after purchase.</li>
         </ul>
       </div>
     </div>
-  </nav>
-  
-    <div class="card" style="width: 80%;margin: auto; margin-top:5%;">
-      <div class="banner" name="about-header">
-      <!-- Insert header information here -->
-      </div>
-      <div style="display: flex;flex-direction: row; margin:auto">
-      <div class="card" style="width: 30%;">
-        <img class="card-img-top" src="/static/person.png" alt="Card image">
-        <div class="card-body">
-          <p class="title">Person1</p>
-          <p>Person1 Title</p>
-          <p class="card-text">Some text that explains the person1 in about 2 short sentences</p>
-          <p>person1@example.com</p>
-        </div>
-      </div>
-
-      <div class="card" style="width: 30%;">
-        <img class="card-img-top" src="/static/person.png" alt="Card image">
-        <div class="card-body">
-          <p class="title">Person2</p>
-          <p>Person2 Title</p>
-          <p class="card-text">Some text that explains the person2 in about 2 short sentences</p>
-          <p>person2@example.com</p>
-        </div>
-      </div>
-
-      <div class="card" style="width: 30%;">
-        <img class="card-img-top" src="/static/person.png" alt="Card image">
-        <div class="card-body">
-          <p class="title">Person3</p>
-          <p>Person3 Title</p>
-          <p class="card-text">Some text that explains the person3 in about 2 short sentences</p>
-          <p>person3@example.com</p>
-        </div>
-      </div>
-    </div>
-    </div>
-    </div>
-    
-</div>
-
+  </div>
+</body>
 </html>
