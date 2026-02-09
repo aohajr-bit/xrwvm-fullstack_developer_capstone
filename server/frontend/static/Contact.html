@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us - Best Cars Dealership</title>
+
+  <!-- Style sheets -->
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/bootstrap.min.css">
+
+  <style>
+    .contact-wrap {
+      width: 80%;
+      margin: auto;
+      margin-top: 5%;
+    }
+    .contact-header {
+      text-align: center;
+      padding: 24px 18px;
+    }
+    .contact-card {
+      padding: 24px;
+    }
+    .contact-img {
+      width: 100%;
+      max-height: 320px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .contact-label {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .contact-value {
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color:darkturquoise; height: 1in;">
+      <div class="container-fluid">
+        <h2 style="padding-right: 5%;">Dealerships</h2>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
+          aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarText">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" style="font-size: larger;" aria-current="page" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" style="font-size: larger;" href="/about">About Us</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" style="font-size: larger;" href="/contact">Contact Us</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page content -->
+    <div class="card shadow-sm contact-wrap">
+      <div class="contact-header">
+        <h1 class="mb-2">Contact Us</h1>
+        <p class="mb-0">
+          Have a question about a vehicle, financing, service, or a dealership location?
+          We’re here to help—reach out anytime.
+        </p>
+      </div>
+
+      <div class="card contact-card">
+        <div class="row g-4 align-items-start">
+          <div class="col-md-6">
+            <img class="contact-img" src="/static/contactus.png" alt="Contact Best Cars Dealership">
+          </div>
+
+          <div class="col-md-6">
+            <div class="contact-label">Phone</div>
+            <div class="contact-value">(555) 019-2026</div>
+
+            <div class="contact-label">Email</div>
+            <div class="contact-value">
+              General: <a href="mailto:support@bestcarsdealership.com">support@bestcarsdealership.com</a><br>
+              Sales: <a href="mailto:sales@bestcarsdealership.com">sales@bestcarsdealership.com</a><br>
+              Service: <a href="mailto:service@bestcarsdealership.com">service@bestcarsdealership.com</a>
+            </div>
+
+            <div class="contact-label">Corporate Office</div>
+            <div class="contact-value">
+              Best Cars Dealership HQ<br>
+              2000 Market Street, Suite 500<br>
+              Philadelphia, PA 19103
+            </div>
+
+            <div class="contact-label">Hours</div>
+            <div class="contact-value">
+              Mon–Fri: 9:00 AM – 6:00 PM<br>
+              Sat: 10:00 AM – 4:00 PM<br>
+              Sun: Closed
+            </div>
+
+            <div class="card p-3">
+              <div class="contact-label">Customer Support Promise</div>
+              <p class="mb-0">
+                We respond to most messages within 1 business day. If your request is urgent, please call us for
+                immediate assistance.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
