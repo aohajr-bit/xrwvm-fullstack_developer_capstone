@@ -9,15 +9,13 @@
 # from datetime import datetime
 
 from django.http import JsonResponse
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.views.decorators.csrf import csrf_exempt
 import logging
 import json
 # from .populate import initiate
 
 logger = logging.getLogger(__name__)
-
-
 
 
 @csrf_exempt
@@ -45,3 +43,10 @@ def login_user(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+@csrf_exempt
+def logout_request(request):
+    logout(request)  # Terminate user session
+    data = {"userName": ""}  # Return empty username
+    return JsonResponse(data)
