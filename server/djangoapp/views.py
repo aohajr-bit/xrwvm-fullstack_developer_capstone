@@ -1,19 +1,9 @@
-# Uncomment the required imports before adding the code
-
-# from django.shortcuts import render
-# from django.http import HttpResponseRedirect, HttpResponse
-# from django.contrib.auth.models import User
-# from django.shortcuts import get_object_or_404, render, redirect
-# from django.contrib.auth import logout
-# from django.contrib import messages
-# from datetime import datetime
-
 from django.http import JsonResponse
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 import logging
 import json
-# from .populate import initiate
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +37,44 @@ def login_user(request):
 
 @csrf_exempt
 def logout_request(request):
-    logout(request)  # Terminate user session
-    data = {"userName": ""}  # Return empty username
-    return JsonResponse(data)
+    logout(request)
+    return JsonResponse({"userName": ""})
+
+
+@csrf_exempt
+def registration(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        username = data.get("userName")
+        password = data.get("password")
+        first_name = data.get("firstName", "")
+        last_name = data.get("lastName", "")
+        email = data.get("email", "")
+
+        if not username or not password:
+            return JsonResponse({"error": "Missing userName or password"}, status=400)
+
+        # If username already exists
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"error": "Already Registered"})
+
+        # Create user
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email
+        )
+
+        # Log them in immediately
+        login(request, user)
+        return JsonResponse({"userName": username, "status": "Authenticated"})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
