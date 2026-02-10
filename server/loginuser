@@ -1,5 +1,5 @@
 curl -X POST "https://aohajr-8000.theianext-1-labs-prod-misc-tools-us-east-0.proxy.cognitiveclass.ai/djangoapp/login" \
   -H "Content-Type: application/json" \
-  -d '{"userName": "anthony_admin", "password": "Agile123456"}'
+  -d '{"userName": "anthony_admin", "password": "YOUR_REAL_PASSWORD"}'
 
-PASTE_THE_AUTHENTICATED_JSON_OUTPUT_HERE
+{"userName": "anthony_admin", "status": "Authenticated"}
