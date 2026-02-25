@@ -1,23 +1,15 @@
 from django.urls import path
-from django.conf.urls.static import static
-from django.conf import settings
+from django.views.generic import TemplateView
 from . import views
 
-app_name = "djangoapp"
-
 urlpatterns = [
-    path(route="register", view=views.registration, name="register"),
-    path(route="login", view=views.login_user, name="login"),
-    path(route="logout", view=views.logout_request, name="logout"),
+    # Root -> redirect to /login
+    path("", views.root_redirect, name="root_redirect"),
 
-    # get cars endpoint
-    path(route="get_cars", view=views.get_cars, name="getcars"),
-
-    # dealers endpoints
-    path(route="get_dealers", view=views.get_dealerships, name="get_dealers"),
-    path(route="get_dealers/<str:state>", view=views.get_dealerships, name="get_dealers_by_state"),
-
-    # dealer details + reviews
-    path(route="dealer/<int:dealer_id>", view=views.get_dealer_details, name="dealer_details"),
-    path(route="reviews/dealer/<int:dealer_id>", view=views.get_dealer_reviews, name="dealer_reviews"),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Frontend page routes (React SPA shell)
+    path("login", TemplateView.as_view(template_name="Home.html"), name="login_page"),
+    path("register", TemplateView.as_view(template_name="Home.html"), name="register_page"),
+    path("dealers", TemplateView.as_view(template_name="Home.html"), name="dealers_page"),
+    path("dealer/<int:id>", TemplateView.as_view(template_name="Home.html"), name="dealer_page"),
+    path("postreview/<int:id>", TemplateView.as_view(template_name="Home.html"), name="postreview_page"),
+]

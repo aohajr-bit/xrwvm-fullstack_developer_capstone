@@ -1,93 +1,140 @@
-import React, { useState,useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import "./Dealers.css";
-import "../assets/style.css";
-import positive_icon from "../assets/positive.png"
-import neutral_icon from "../assets/neutral.png"
-import negative_icon from "../assets/negative.png"
-import review_icon from "../assets/reviewbutton.png"
-import Header from '../Header/Header';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-const Dealer = () => {
+const Dealers = () => {
+  const [dealers, setDealers] = useState([]);
+  const [filteredDealers, setFilteredDealers] = useState([]);
+  const [states, setStates] = useState(["All"]);
+  const [selectedState, setSelectedState] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-
-  const [dealer, setDealer] = useState({});
-  const [reviews, setReviews] = useState([]);
-  const [unreviewed, setUnreviewed] = useState(false);
-  const [postReview, setPostReview] = useState(<></>)
-
-  let curr_url = window.location.href;
-  let root_url = curr_url.substring(0,curr_url.indexOf("dealer"));
-  let params = useParams();
-  let id =params.id;
-  let dealer_url = root_url+`djangoapp/dealer/${id}`;
-  let reviews_url = root_url+`djangoapp/reviews/dealer/${id}`;
-  let post_review = root_url+`postreview/${id}`;
-  
-  const get_dealer = async ()=>{
-    const res = await fetch(dealer_url, {
-      method: "GET"
-    });
-    const retobj = await res.json();
-    
-    if(retobj.status === 200) {
-      let dealerobjs = Array.from(retobj.dealer)
-      setDealer(dealerobjs[0])
-    }
-  }
-
-  const get_reviews = async ()=>{
-    const res = await fetch(reviews_url, {
-      method: "GET"
-    });
-    const retobj = await res.json();
-    
-    if(retobj.status === 200) {
-      if(retobj.reviews.length > 0){
-        setReviews(retobj.reviews)
-      } else {
-        setUnreviewed(true);
-      }
-    }
-  }
-
-  const senti_icon = (sentiment)=>{
-    let icon = sentiment === "positive"?positive_icon:sentiment==="negative"?negative_icon:neutral_icon;
-    return icon;
-  }
+  const normalizeDealers = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.dealers)) return data.dealers;
+    throw new Error("Unexpected dealers response shape");
+  };
 
   useEffect(() => {
-    get_dealer();
-    get_reviews();
-    if(sessionStorage.getItem("username")) {
-      setPostReview(<a href={post_review}><img src={review_icon} style={{width:'10%',marginLeft:'10px',marginTop:'10px'}} alt='Post Review'/></a>)
+    const fetchDealers = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      
+        const response = await fetch("/djangoapp/get_dealers", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dealers (${response.status})`);
+        }
+
+        const data = await response.json();
+        const dealerList = normalizeDealers(data);
+
+        setDealers(dealerList);
+        setFilteredDealers(dealerList);
+
+        const uniqueStates = [
+          "All",
+          ...Array.from(new Set(dealerList.map((d) => d.state).filter(Boolean))).sort(),
+        ];
+        setStates(uniqueStates);
+      } catch (err) {
+        console.error("Error fetching dealers:", err);
+        setError(err.message || "Unable to load dealers.");
+        setDealers([]);
+        setFilteredDealers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDealers();
+  }, []);
+
+  const handleStateChange = (e) => {
+    const state = e.target.value;
+    setSelectedState(state);
+
+    if (state === "All") {
+      setFilteredDealers(dealers);
+    } else {
+      setFilteredDealers(dealers.filter((dealer) => dealer.state === state));
     }
-  },[]);  
+  };
 
+  return (
+    <div className="container mt-4">
+      <h2>Dealerships</h2>
 
-return(
-  <div style={{margin:"20px"}}>
-      <Header/>
-      <div style={{marginTop:"10px"}}>
-      <h1 style={{color:"grey"}}>{dealer.full_name}{postReview}</h1>
-      <h4  style={{color:"grey"}}>{dealer['city']},{dealer['address']}, Zip - {dealer['zip']}, {dealer['state']} </h4>
+      <div className="mb-3" style={{ maxWidth: "300px" }}>
+        <label className="form-label">Filter by State</label>
+        <select
+          className="form-select"
+          value={selectedState}
+          onChange={handleStateChange}
+        >
+          {states.map((state) => (
+            <option key={state} value={state}>
+              {state}
+            </option>
+          ))}
+        </select>
       </div>
-      <div class="reviews_panel">
-      {reviews.length === 0 && unreviewed === false ? (
-        <text>Loading Reviews....</text>
-      ):  unreviewed === true? <div>No reviews yet! </div> :
-      reviews.map(review => (
-        <div className='review_panel'>
-          <img src={senti_icon(review.sentiment)} className="emotion_icon" alt='Sentiment'/>
-          <div className='review'>{review.review}</div>
-          <div className="reviewer">{review.name} {review.car_make} {review.car_model} {review.car_year}</div>
-        </div>
-      ))}
-    </div>  
-  </div>
-)
-}
 
-export default Dealer
+      {loading && <p>Loading dealers...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      {!loading && !error && (
+        <>
+          {filteredDealers.length > 0 ? (
+            <div className="row">
+              {filteredDealers.map((dealer) => {
+                if (dealer.id === undefined || dealer.id === null) {
+                  throw new Error("Dealer is missing required 'id' field");
+                }
+
+                return (
+                  <div className="col-md-6 col-lg-4 mb-4" key={dealer.id}>
+                    <div className="card h-100 shadow-sm">
+                      <div className="card-body">
+                        <h5 className="card-title">
+                          {dealer.full_name || dealer.name || "Dealer"}
+                        </h5>
+
+                        <p className="card-text mb-1">
+                          <strong>City:</strong> {dealer.city || "N/A"}
+                        </p>
+                        <p className="card-text mb-1">
+                          <strong>State:</strong> {dealer.state || "N/A"}
+                        </p>
+                        <p className="card-text mb-2">
+                          <strong>Address:</strong> {dealer.address || "N/A"}
+                        </p>
+
+                        <div className="d-flex gap-2 flex-wrap">
+                          <Link
+                            className="btn btn-primary btn-sm"
+                            to={`/postreview/${dealer.id}`}
+                          >
+                            Add Review
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p>No dealers found.</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Dealers;

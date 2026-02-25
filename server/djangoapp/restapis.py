@@ -1,78 +1,46 @@
 import requests
+import json
 import os
-from dotenv import load_dotenv
-from urllib.parse import urlencode, quote
 
-load_dotenv()
-
-backend_url = os.getenv("backend_url", default="http://localhost:3030")
-sentiment_analyzer_url = os.getenv("sentiment_analyzer_url", default="http://localhost:5050/")
+NODE_BACKEND_URL = "http://localhost:3030"
 
 
 def get_request(endpoint, **kwargs):
-    """
-    Generic GET request helper to call the Node/Mongo backend.
-
-    Examples:
-      get_request("fetchDealers")
-      get_request("fetchReviews", dealerId="15")
-    """
-    # Build query string safely (no trailing &)
-    params = urlencode({k: v for k, v in kwargs.items()}) if kwargs else ""
-    # Lab-style URL format: <backend_url><endpoint>?<params>
-    # Ensure we don't end up with double slashes or missing slashes.
-    base = backend_url.rstrip("/")
-    ep = "/" + endpoint.lstrip("/")
-    request_url = f"{base}{ep}"
-    if params:
-        request_url = f"{request_url}?{params}"
-
-    print("GET from {} ".format(request_url))
-
-    try:
-        response = requests.get(request_url)
-        response.raise_for_status()
-        return response.json()
-    except Exception as err:
-        print(f"Unexpected {err=}, {type(err)=}")
-        print("Network exception occurred")
-        return None
-
-
-def analyze_review_sentiments(text):
-    """
-    Calls the sentiment analyzer microservice on Code Engine.
-
-    Expected format:
-      <sentiment_analyzer_url>/analyze/<text>
-    """
-    base = sentiment_analyzer_url.rstrip("/")
-    safe_text = quote(text)  # handles spaces and special chars
-    request_url = f"{base}/analyze/{safe_text}"
-    print("Sentiment GET from {} ".format(request_url))
-
-    try:
-        response = requests.get(request_url)
-        response.raise_for_status()
-        return response.json()
-    except Exception as err:
-        print(f"Unexpected {err=}, {type(err)=}")
-        print("Network exception occurred")
-        return None
+    url = f"{NODE_BACKEND_URL}{endpoint}"
+    response = requests.get(url, params=kwargs, timeout=10)
+    response.raise_for_status()
+    return response.json()
 
 
 def post_review(data_dict):
-    """
-    POST a review to the backend (will be used in later steps if required).
-    Endpoint name may vary by lab version; adjust if your instructions say otherwise.
-    """
-    try:
-        base = backend_url.rstrip("/")
-        request_url = f"{base}/insert_review"
-        response = requests.post(request_url, json=data_dict)
-        response.raise_for_status()
-        return response.json()
-    except Exception as err:
-        print(f"Unexpected {err=}, {type(err)=}")
-        print("Network exception occurred")
-        return None
+    url = f"{NODE_BACKEND_URL}/insert_review"
+    response = requests.post(url, json=data_dict, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
+def analyze_review_sentiments(text):
+    # Strict/simple local stub
+    return {"sentiment": "neutral"}
+
+
+def get_cars():
+    car_file = "/home/project/xrwvm-fullstack_developer_capstone/server/database/data/car_records.json"
+
+    if not os.path.exists(car_file):
+        raise FileNotFoundError(f"Cars file not found: {car_file}")
+
+    with open(car_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Accept common capstone formats
+    if isinstance(data, list):
+        return data
+
+    if isinstance(data, dict):
+        if "cars" in data and isinstance(data["cars"], list):
+            return data["cars"]
+        if "CarRecords" in data and isinstance(data["CarRecords"], list):
+            return data["CarRecords"]
+
+    raise Exception("Unexpected car_records.json format")
