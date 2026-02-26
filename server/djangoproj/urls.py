@@ -6,9 +6,9 @@ from django.conf import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Frontend page routes (/login, /dealers, etc.)
+    # Frontend page routes (/login, /dealers, /dealer/<id>, /postreview/<id>)
     path('', include('djangoapp.urls')),
 
-    # API routes (/djangoapp/login, /djangoapp/get_cars, etc.)
+    # API routes (/djangoapp/login, /djangoapp/get_cars, /djangoapp/add_review, etc.)
     path('djangoapp/', include('djangoapp.api_urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

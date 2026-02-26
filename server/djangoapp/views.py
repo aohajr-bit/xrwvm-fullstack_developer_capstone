@@ -1,180 +1,241 @@
-import json
-from datetime import datetime
-
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.contrib.auth.models import User
+from django.contrib.auth import logout, authenticate, login
 from django.views.decorators.csrf import csrf_exempt
+import json
+from datetime import date
+import requests
 
-from .restapis import analyze_review_sentiments, get_cars, get_request, post_review
-
-
-def root_redirect(request):
-    return redirect("/login")
-
+from .restapis import (
+    get_dealers_from_db,
+    get_dealer_by_id_from_db,
+    get_reviews_by_dealer_id_from_db,
+    post_review,
+    analyze_review_sentiments,
+    get_cars as rest_get_cars,
+)
 
 def registration(request):
-    if request.method != "POST":
-        return JsonResponse({"message": "POST required"}, status=405)
-
-    username = request.POST.get("username")
-    password = request.POST.get("password")
-    first_name = request.POST.get("first_name", "")
-    last_name = request.POST.get("last_name", "")
-
-    if not username or not password:
-        return JsonResponse({"message": "Username and password are required."}, status=400)
-
-    if User.objects.filter(username=username).exists():
-        return JsonResponse({"message": "Username already exists."}, status=409)
-
-    user = User.objects.create_user(
-        username=username,
-        password=password,
-        first_name=first_name,
-        last_name=last_name
-    )
-    login(request, user)
-    return JsonResponse({"userName": user.username, "status": 200})
-
-
-@csrf_exempt
-def login_user(request):
-    if request.method != "POST":
-        return JsonResponse({"message": "POST required"}, status=405)
-
-    try:
-        content_type = request.content_type or ""
-
-        if "application/json" in content_type:
-            body = json.loads(request.body.decode("utf-8")) if request.body else {}
-            username = body.get("username")
-            password = body.get("password")
-        else:
-            username = request.POST.get("username")
-            password = request.POST.get("password")
+    context = {}
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip()
+        password = (request.POST.get("password") or "").strip()
+        firstname = (request.POST.get("firstname") or "").strip()
+        lastname = (request.POST.get("lastname") or "").strip()
 
         if not username or not password:
-            return JsonResponse({"message": "Username and password are required", "status": 400}, status=400)
+            context["error"] = "Username and password are required."
+            return render(request, "registration.html", context)
 
-        user = authenticate(request, username=username, password=password)
+        if User.objects.filter(username=username).exists():
+            context["error"] = "Username already exists."
+            return render(request, "registration.html", context)
 
-        if user is None:
-            return JsonResponse({"message": "Invalid credentials", "status": 401}, status=401)
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=firstname,
+            last_name=lastname
+        )
+        user.save()
+        return redirect("djangoapp:login")
 
+    return render(request, "registration.html", context)
+
+def login_user(request):
+    if request.method == "GET":
+        return render(request, "login.html")
+
+    username = ""
+    password = ""
+
+    try:
+        if request.body:
+            data = json.loads(request.body.decode("utf-8"))
+            username = (data.get("username") or "").strip()
+            password = (data.get("password") or "").strip()
+    except Exception:
+        pass
+
+    if not username:
+        username = (request.POST.get("username") or "").strip()
+    if not password:
+        password = (request.POST.get("password") or "").strip()
+
+    user = authenticate(username=username, password=password)
+    if user is not None:
         login(request, user)
-        full_name = f"{user.first_name} {user.last_name}".strip()
+        return JsonResponse(
+            {
+                "status": 200,
+                "userName": user.username,
+                "firstName": user.first_name,
+                "lastName": user.last_name,
+            }
+        )
 
-        return JsonResponse({
-            "userName": user.username,
-            "fullName": full_name if full_name else user.username,
-            "status": 200
-        })
-    except Exception as e:
-        print("login_user error:", e)
-        return JsonResponse({"message": str(e), "status": 500}, status=500)
+    return JsonResponse({"status": 401, "message": "Invalid credentials"}, status=401)
 
+def logout_user(request):
+    logout(request)
+    return redirect("djangoapp:login")
 
 def logout_request(request):
-    logout(request)
-    return JsonResponse({"status": 200, "message": "Logged out"})
+    return logout_user(request)
 
+def get_dealers(request):
+    dealers = get_dealers_from_db("")
+    return JsonResponse({"status": 200, "dealers": dealers}, safe=False)
 
-def get_dealerships(request):
+def get_dealers_by_state(request, state):
+    if state.lower() == "all":
+        dealers = get_dealers_from_db("")
+    else:
+        dealers = get_dealers_from_db(state)
+    return JsonResponse({"status": 200, "dealers": dealers}, safe=False)
+
+def get_dealer_details(request, dealer_id):
+    dealer = get_dealer_by_id_from_db(dealer_id)
+    return JsonResponse(dealer, safe=False)
+
+def get_dealer_reviews(request, dealer_id):
+    """
+    Return a shape that satisfies multiple frontend expectations:
+    - { reviews: [...] }  (what you confirmed)
+    - { status: 200, reviews: [...] }  (common)
+    - { status: 200, results: [...], data: [...], dealers: [...] } (defensive)
+    """
+    reviews = get_reviews_by_dealer_id_from_db(dealer_id)
+    return JsonResponse(
+        {
+            "status": 200,
+            "reviews": reviews,
+            "results": reviews,
+            "data": reviews,
+        },
+        safe=False
+    )
+
+def get_cars(request):
+    cars = rest_get_cars()
+    return JsonResponse(cars, safe=False)
+
+def _next_review_id_for_dealer(dealer_id: int) -> int:
     try:
-        dealers = get_request("/fetchDealers")
+        existing = get_reviews_by_dealer_id_from_db(dealer_id)
+        ids = []
+        for r in existing:
+            rid = r.get("id")
+            if isinstance(rid, int):
+                ids.append(rid)
+            elif isinstance(rid, str) and rid.isdigit():
+                ids.append(int(rid))
+        return (max(ids) + 1) if ids else 1
+    except Exception:
+        return 1
 
-        if isinstance(dealers, dict) and "dealers" in dealers:
-            return JsonResponse(dealers, safe=False)
-
-        if isinstance(dealers, list):
-            return JsonResponse({"dealers": dealers}, safe=False)
-
-        return JsonResponse(
-            {"message": "Unexpected dealers response shape", "data": dealers},
-            status=500
-        )
-    except Exception as e:
-        print("get_dealerships error:", e)
-        return JsonResponse({"message": str(e)}, status=500)
-
-
-def get_cars_view(request):
-    try:
-        cars = get_cars()
-
-        if isinstance(cars, dict) and "cars" in cars:
-            return JsonResponse(cars["cars"], safe=False)
-
-        if isinstance(cars, list):
-            return JsonResponse(cars, safe=False)
-
-        return JsonResponse(
-            {"message": "Unexpected cars response shape", "data": cars},
-            status=500
-        )
-    except Exception as e:
-        print("get_cars_view error:", e)
-        return JsonResponse({"message": str(e)}, status=500)
-
+def _parse_car_fields(car_value: str):
+    if not car_value or not isinstance(car_value, str):
+        return None, None, None
+    parts = car_value.strip().split()
+    if len(parts) < 3:
+        return None, None, None
+    year_part = parts[-1]
+    if not year_part.isdigit():
+        return None, None, None
+    year_int = int(year_part)
+    make = parts[0]
+    model = " ".join(parts[1:-1])
+    return make, model, year_int
 
 @csrf_exempt
 def add_review(request):
     if request.method != "POST":
-        return JsonResponse({"message": "POST required", "status": 405}, status=405)
+        return JsonResponse({"status": 405, "message": "POST required"}, status=405)
+
+    payload = {}
+    try:
+        if request.body:
+            payload = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        payload = {}
+
+    if not payload:
+        payload = request.POST.dict()
+
+    dealer_id = payload.get("dealer_id")
+    if dealer_id is None and "dealership" in payload:
+        dealer_id = payload.get("dealership")
 
     try:
-        content_type = request.content_type or ""
+        dealer_id_int = int(dealer_id)
+    except Exception:
+        return JsonResponse({"status": 400, "message": "Invalid dealer_id"}, status=400)
 
-        if "application/json" in content_type:
-            data = json.loads(request.body.decode("utf-8")) if request.body else {}
-        else:
-            data = request.POST.dict()
+    payload["dealership"] = dealer_id_int
+    payload["id"] = _next_review_id_for_dealer(dealer_id_int)
 
-        dealer_id = data.get("dealer_id")
-        review_text = data.get("review")
-        purchase = data.get("purchase", False)
-        purchase_date = data.get("purchase_date", "")
-        car = data.get("car", "")
-        name = data.get("name")
+    purchase_date = (payload.get("purchase_date") or "").strip()
+    if not purchase_date:
+        purchase_date = date.today().isoformat()
+    payload["purchase_date"] = purchase_date
 
-        if dealer_id in [None, ""]:
-            return JsonResponse({"message": "dealer_id is required", "status": 400}, status=400)
+    purchase_val = payload.get("purchase", False)
+    if isinstance(purchase_val, str):
+        purchase_val = purchase_val.strip().lower() in ("true", "1", "yes", "y", "on")
+    payload["purchase"] = bool(purchase_val)
 
-        if not name:
-            return JsonResponse({"message": "Reviewer name is required", "status": 400}, status=400)
+    reviewer = payload.get("name")
+    if reviewer is None or str(reviewer).strip() == "":
+        payload["name"] = "Anonymous User"
 
-        if not review_text:
-            return JsonResponse({"message": "Review text is required", "status": 400}, status=400)
+    car_value = payload.get("car", "")
+    car_make, car_model, car_year = _parse_car_fields(car_value)
 
-        if isinstance(purchase, str):
-            purchase = purchase.lower() in ["true", "1", "yes", "on"]
+    if car_make is None:
+        cars = rest_get_cars()
+        if not cars or not isinstance(cars, list):
+            return JsonResponse({"status": 500, "message": "Cars list unavailable"}, status=500)
+        first = cars[0]
+        car_make = first.get("make")
+        car_model = first.get("model")
+        car_year = first.get("year")
 
-        sentiment_data = analyze_review_sentiments(review_text)
-        sentiment = sentiment_data.get("sentiment", "neutral")
+    payload["car_make"] = car_make
+    payload["car_model"] = car_model
+    payload["car_year"] = int(car_year)
 
-        outbound_review = {
-            "dealership": int(dealer_id),
-            "name": name,
-            "review": review_text,
-            "purchase": purchase,
-            "purchase_date": purchase_date,
-            "car": car,
-            "sentiment": sentiment,
-            "time": datetime.now().strftime("%Y-%m-%d")
-        }
+    review_text = payload.get("review", "")
+    payload["sentiment"] = analyze_review_sentiments(review_text) if review_text else "neutral"
 
-        backend_resp = post_review(outbound_review)
+    if "dealer_id" in payload:
+        del payload["dealer_id"]
 
-        return JsonResponse({
-            "status": 200,
-            "message": "Review added successfully",
-            "backend_response": backend_resp
-        })
-    except ValueError as e:
-        print("add_review value error:", e)
-        return JsonResponse({"message": f"Invalid dealer_id: {e}", "status": 400}, status=400)
-    except Exception as e:
-        print("add_review error:", e)
-        return JsonResponse({"message": str(e), "status": 500}, status=500)
+    try:
+        resp = post_review(payload)
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({"status": 500, "message": f"Node request failed: {str(e)}"}, status=500)
+
+    try:
+        data = resp.json()
+    except Exception:
+        text = getattr(resp, "text", "")
+        data = {"status": resp.status_code, "message": text[:500]}
+
+    if isinstance(data, dict) and "status" not in data:
+        data["status"] = resp.status_code
+
+    return JsonResponse(data, safe=False, status=resp.status_code)
+
+def get_dealers_list(request):
+    return get_dealers(request)
+
+def get_dealer(request, dealer_id):
+    return get_dealer_details(request, dealer_id)
+
+def get_reviews(request, dealer_id):
+    return get_dealer_reviews(request, dealer_id)
+
+def add_review_to_db(request):
+    return add_review(request)
