@@ -16,6 +16,14 @@ from .restapis import (
     get_cars as rest_get_cars,
 )
 
+# ----------------------------
+# React SPA shell
+# ----------------------------
+def root_redirect(request):
+    # Serve the React shell (Home.html) at /
+    return render(request, "Home.html")
+
+
 def registration(request):
     context = {}
     if request.method == "POST":
@@ -42,6 +50,7 @@ def registration(request):
         return redirect("djangoapp:login")
 
     return render(request, "registration.html", context)
+
 
 def login_user(request):
     if request.method == "GET":
@@ -77,16 +86,20 @@ def login_user(request):
 
     return JsonResponse({"status": 401, "message": "Invalid credentials"}, status=401)
 
+
 def logout_user(request):
     logout(request)
     return redirect("djangoapp:login")
 
+
 def logout_request(request):
     return logout_user(request)
+
 
 def get_dealers(request):
     dealers = get_dealers_from_db("")
     return JsonResponse({"status": 200, "dealers": dealers}, safe=False)
+
 
 def get_dealers_by_state(request, state):
     if state.lower() == "all":
@@ -95,9 +108,11 @@ def get_dealers_by_state(request, state):
         dealers = get_dealers_from_db(state)
     return JsonResponse({"status": 200, "dealers": dealers}, safe=False)
 
+
 def get_dealer_details(request, dealer_id):
     dealer = get_dealer_by_id_from_db(dealer_id)
     return JsonResponse(dealer, safe=False)
+
 
 def get_dealer_reviews(request, dealer_id):
     """
@@ -117,9 +132,11 @@ def get_dealer_reviews(request, dealer_id):
         safe=False
     )
 
+
 def get_cars(request):
     cars = rest_get_cars()
     return JsonResponse(cars, safe=False)
+
 
 def _next_review_id_for_dealer(dealer_id: int) -> int:
     try:
@@ -135,6 +152,7 @@ def _next_review_id_for_dealer(dealer_id: int) -> int:
     except Exception:
         return 1
 
+
 def _parse_car_fields(car_value: str):
     if not car_value or not isinstance(car_value, str):
         return None, None, None
@@ -148,6 +166,7 @@ def _parse_car_fields(car_value: str):
     make = parts[0]
     model = " ".join(parts[1:-1])
     return make, model, year_int
+
 
 @csrf_exempt
 def add_review(request):
@@ -228,14 +247,18 @@ def add_review(request):
 
     return JsonResponse(data, safe=False, status=resp.status_code)
 
+
 def get_dealers_list(request):
     return get_dealers(request)
+
 
 def get_dealer(request, dealer_id):
     return get_dealer_details(request, dealer_id)
 
+
 def get_reviews(request, dealer_id):
     return get_dealer_reviews(request, dealer_id)
+
 
 def add_review_to_db(request):
     return add_review(request)

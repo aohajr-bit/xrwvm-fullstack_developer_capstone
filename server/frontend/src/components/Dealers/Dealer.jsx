@@ -1,140 +1,89 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import Header from "../Header/Header";
 
-const Dealers = () => {
-  const [dealers, setDealers] = useState([]);
-  const [filteredDealers, setFilteredDealers] = useState([]);
-  const [states, setStates] = useState(["All"]);
-  const [selectedState, setSelectedState] = useState("All");
-  const [loading, setLoading] = useState(true);
+const Dealer = () => {
+  const { id } = useParams();
+
+  const [dealer, setDealer] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [error, setError] = useState("");
 
-  const normalizeDealers = (data) => {
+  const normalizeReviews = (data) => {
     if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.dealers)) return data.dealers;
-    throw new Error("Unexpected dealers response shape");
+    if (data && Array.isArray(data.reviews)) return data.reviews;
+    if (data && Array.isArray(data.results)) return data.results;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
   };
 
   useEffect(() => {
-    const fetchDealers = async () => {
+    const load = async () => {
       try {
-        setLoading(true);
         setError("");
 
-        const response = await fetch("/djangoapp/get_dealers", {
-          method: "GET",
-          credentials: "include",
-        });
+        // Dealer details
+        const d = await fetch(`/djangoapp/get_dealer/${id}`, { method: "GET" });
+        const dealerData = await d.json();
+        setDealer(dealerData);
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch dealers (${response.status})`);
-        }
-
-        const data = await response.json();
-        const dealerList = normalizeDealers(data);
-
-        setDealers(dealerList);
-        setFilteredDealers(dealerList);
-
-        const uniqueStates = [
-          "All",
-          ...Array.from(new Set(dealerList.map((d) => d.state).filter(Boolean))).sort(),
-        ];
-        setStates(uniqueStates);
-      } catch (err) {
-        console.error("Error fetching dealers:", err);
-        setError(err.message || "Unable to load dealers.");
-        setDealers([]);
-        setFilteredDealers([]);
-      } finally {
-        setLoading(false);
+        // ✅ Reviews (THIS is what you need for added_review.png)
+        const r = await fetch(`/djangoapp/get_reviews/${id}`, { method: "GET" });
+        const reviewsData = await r.json();
+        setReviews(normalizeReviews(reviewsData));
+      } catch (e) {
+        console.error(e);
+        setError("Unable to load dealer and reviews.");
       }
     };
 
-    fetchDealers();
-  }, []);
-
-  const handleStateChange = (e) => {
-    const state = e.target.value;
-    setSelectedState(state);
-
-    if (state === "All") {
-      setFilteredDealers(dealers);
-    } else {
-      setFilteredDealers(dealers.filter((dealer) => dealer.state === state));
-    }
-  };
+    load();
+  }, [id]);
 
   return (
-    <div className="container mt-4">
-      <h2>Dealerships</h2>
+    <div>
+      <Header />
+      <div className="container mt-4">
+        {error ? <div className="alert alert-danger">{error}</div> : null}
 
-      <div className="mb-3" style={{ maxWidth: "300px" }}>
-        <label className="form-label">Filter by State</label>
-        <select
-          className="form-select"
-          value={selectedState}
-          onChange={handleStateChange}
-        >
-          {states.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {loading && <p>Loading dealers...</p>}
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {!loading && !error && (
-        <>
-          {filteredDealers.length > 0 ? (
-            <div className="row">
-              {filteredDealers.map((dealer) => {
-                if (dealer.id === undefined || dealer.id === null) {
-                  throw new Error("Dealer is missing required 'id' field");
-                }
-
-                return (
-                  <div className="col-md-6 col-lg-4 mb-4" key={dealer.id}>
-                    <div className="card h-100 shadow-sm">
-                      <div className="card-body">
-                        <h5 className="card-title">
-                          {dealer.full_name || dealer.name || "Dealer"}
-                        </h5>
-
-                        <p className="card-text mb-1">
-                          <strong>City:</strong> {dealer.city || "N/A"}
-                        </p>
-                        <p className="card-text mb-1">
-                          <strong>State:</strong> {dealer.state || "N/A"}
-                        </p>
-                        <p className="card-text mb-2">
-                          <strong>Address:</strong> {dealer.address || "N/A"}
-                        </p>
-
-                        <div className="d-flex gap-2 flex-wrap">
-                          <Link
-                            className="btn btn-primary btn-sm"
-                            to={`/postreview/${dealer.id}`}
-                          >
-                            Add Review
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        <h2>Dealer Details</h2>
+        {dealer ? (
+          <div style={{ marginBottom: "16px" }}>
+            <div><strong>{dealer.full_name || dealer.name || `Dealer ${id}`}</strong></div>
+            <div>{dealer.address || ""}</div>
+            <div>
+              {dealer.city || ""} {dealer.state || ""} {dealer.zip || ""}
             </div>
-          ) : (
-            <p>No dealers found.</p>
-          )}
-        </>
-      )}
+          </div>
+        ) : (
+          <p>Loading dealer...</p>
+        )}
+
+        <h3>Reviews</h3>
+        {reviews.length > 0 ? (
+          <ul>
+            {reviews.map((rev, idx) => (
+              <li key={rev.id ?? idx} style={{ marginBottom: "12px" }}>
+                <div>
+                  <strong>{rev.name || "Anonymous User"}</strong>{" "}
+                  {rev.sentiment ? `(${rev.sentiment})` : ""}
+                </div>
+                <div>{rev.review}</div>
+                <div style={{ fontSize: "0.9em", opacity: 0.8 }}>
+                  {rev.car_make && rev.car_model && rev.car_year
+                    ? `${rev.car_make} ${rev.car_model} (${rev.car_year})`
+                    : ""}
+                  {rev.purchase_date ? ` • ${rev.purchase_date}` : ""}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No reviews found.</p>
+        )}
+      </div>
     </div>
   );
 };
 
-export default Dealers;
+export default Dealer;

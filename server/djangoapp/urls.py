@@ -3,7 +3,7 @@ from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
-    # Root -> redirect to /login
+    # Root -> serve React shell (index.html)
     path("", views.root_redirect, name="root_redirect"),
 
     # Frontend page routes (React SPA shell)
