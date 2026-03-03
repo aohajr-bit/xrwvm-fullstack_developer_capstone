@@ -1,3 +1,4 @@
+/*jshint esversion: 8 */
 const express = require('express');
 const mongoose = require('mongoose');
 const fs = require('fs');
@@ -8,7 +9,7 @@ const port = 3030;
 
 app.use(cors());
 
-// ✅ Parse JSON + form bodies
+// Parse JSON + form bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -77,7 +78,9 @@ app.get("/fetchDealers/:state", async (req, res) => {
   try {
     const state = (req.params.state || "").toUpperCase();
     const documents =
-      state === "ALL" ? await Dealerships.find() : await Dealerships.find({ state });
+      state === "ALL"
+        ? await Dealerships.find()
+        : await Dealerships.find({ state: state });
     res.json(documents);
   } catch (error) {
     res.status(500).json({ error: "Error fetching documents" });
@@ -95,13 +98,16 @@ app.get("/fetchDealer/:id", async (req, res) => {
   }
 });
 
-// ✅ Insert review (NOW WORKS with Django JSON posts)
+// Insert review (NOW WORKS with Django JSON posts)
 app.post("/insert_review", async (req, res) => {
   try {
     const data = req.body || {};
 
     const latest = await Reviews.find().sort({ id: -1 }).limit(1);
-    const new_id = (latest && latest.length > 0 && latest[0].id != null) ? latest[0].id + 1 : 1;
+    const new_id =
+      (latest && latest.length > 0 && latest[0].id != null)
+        ? latest[0].id + 1
+        : 1;
 
     const review = new Reviews({
       id: new_id,
@@ -112,8 +118,8 @@ app.post("/insert_review", async (req, res) => {
       purchase_date: data["purchase_date"],
       car_make: data["car_make"],
       car_model: data["car_model"],
-      car_year: data["car_year"],
-      sentiment: data["sentiment"], // keep if your schema allows it
+      car_year: data.car_year,
+      sentiment: data.sentiment, // keep if your schema allows it
     });
 
     const savedReview = await review.save();
