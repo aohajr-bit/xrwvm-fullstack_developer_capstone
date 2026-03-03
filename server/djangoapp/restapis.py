@@ -67,3 +67,4 @@ def get_cars():
 def analyze_review_sentiments(text):
     # Force a visible sentiment for the UI screenshot
     return "positive"
+    
