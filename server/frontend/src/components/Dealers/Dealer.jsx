@@ -9,6 +9,8 @@ const Dealer = () => {
   const [reviews, setReviews] = useState([]);
   const [error, setError] = useState("");
 
+  const isLoggedIn = sessionStorage.getItem("username") != null;
+
   const normalizeReviews = (data) => {
     if (Array.isArray(data)) return data;
     if (data && Array.isArray(data.reviews)) return data.reviews;
@@ -27,7 +29,7 @@ const Dealer = () => {
         const dealerData = await d.json();
         setDealer(dealerData);
 
-        // ✅ Reviews (THIS is what you need for added_review.png)
+        // Reviews
         const r = await fetch(`/djangoapp/get_reviews/${id}`, { method: "GET" });
         const reviewsData = await r.json();
         setReviews(normalizeReviews(reviewsData));
@@ -49,11 +51,22 @@ const Dealer = () => {
         <h2>Dealer Details</h2>
         {dealer ? (
           <div style={{ marginBottom: "16px" }}>
-            <div><strong>{dealer.full_name || dealer.name || `Dealer ${id}`}</strong></div>
+            <div>
+              <strong>{dealer.full_name || dealer.name || `Dealer ${id}`}</strong>
+            </div>
             <div>{dealer.address || ""}</div>
             <div>
               {dealer.city || ""} {dealer.state || ""} {dealer.zip || ""}
             </div>
+
+            {/* ✅ Requirement: PostReview link on Dealer page for logged-in users */}
+            {isLoggedIn ? (
+              <div style={{ marginTop: "12px" }}>
+                <a className="btn btn-primary btn-sm" href={`/postreview/${id}`}>
+                  Post Review
+                </a>
+              </div>
+            ) : null}
           </div>
         ) : (
           <p>Loading dealer...</p>
