@@ -111,15 +111,16 @@ app.post("/insert_review", async (req, res) => {
 
     const review = new Reviews({
       id: new_id,
-      name: data["name"],
-      dealership: data["dealership"],
-      review: data["review"],
-      purchase: data["purchase"],
-      purchase_date: data["purchase_date"],
+      name: data.name,
+      dealership: data.dealership,
+      review: data.review,
+      purchase: data.purchase,
+      purchase_date: data.purchase_date,
       car_make: data.car_make,
       car_model: data.car_model,
       car_year: data.car_year,
-      sentiment: data.sentiment, // keep if your schema allows it
+      sentiment: data.sentiment,
+});
     });
 
     const savedReview = await review.save();
