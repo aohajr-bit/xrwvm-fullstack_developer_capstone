@@ -116,8 +116,8 @@ app.post("/insert_review", async (req, res) => {
       review: data["review"],
       purchase: data["purchase"],
       purchase_date: data["purchase_date"],
-      car_make: data["car_make"],
-      car_model: data["car_model"],
+      car_make: data.car_make,
+      car_model: data.car_model,
       car_year: data.car_year,
       sentiment: data.sentiment, // keep if your schema allows it
     });
