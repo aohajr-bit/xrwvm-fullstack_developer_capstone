@@ -38,4 +38,3 @@ def to_dicts(records: Iterable[DealershipRecord]) -> List[dict]:
         }
         for record in records
     ]
-    
