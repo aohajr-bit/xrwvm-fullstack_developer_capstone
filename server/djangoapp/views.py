@@ -262,3 +262,4 @@ def get_reviews(request, dealer_id):
 
 def add_review_to_db(request):
     return add_review(request)
+    
