@@ -19,6 +19,8 @@ from .restapis import (
 # ----------------------------
 # React SPA shell
 # ----------------------------
+
+
 def root_redirect(request):
     # Serve the React shell (Home.html) at /
     return render(request, "Home.html")
