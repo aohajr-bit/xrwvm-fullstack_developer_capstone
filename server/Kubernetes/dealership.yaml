@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dealership
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dealership
+  template:
+    metadata:
+      labels:
+        app: dealership
+    spec:
+      containers:
+        - name: dealership
+          image: YOUR_IMAGE_REGISTRY/dealership:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: BACKEND_URL
+              value: "http://dealership-backend:3030"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dealership
+spec:
+  selector:
+    app: dealership
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      

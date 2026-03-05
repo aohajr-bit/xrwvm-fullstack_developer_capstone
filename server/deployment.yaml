@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  labels:
+    run: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: mongo
+  template:
+    metadata:
+      labels:
+        run: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:6
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    run: mongo
+  ports:
+    - name: mongo
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dealership-backend
+  labels:
+    run: dealership-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: dealership-backend
+  template:
+    metadata:
+      labels:
+        run: dealership-backend
+    spec:
+      containers:
+        - name: dealership-backend
+          image: us.icr.io/sn-labs-aohajr/dealership-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3030
+              protocol: TCP
+          env:
+            - name: MONGODB_URI
+              value: "mongodb://mongo:27017/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dealership-backend
+spec:
+  selector:
+    run: dealership-backend
+  ports:
+    - name: http
+      port: 3030
+      targetPort: 3030
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dealership
+  labels:
+    run: dealership
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: dealership
+  template:
+    metadata:
+      labels:
+        run: dealership
+    spec:
+      containers:
+        - name: dealership
+          image: us.icr.io/sn-labs-aohajr/dealership:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: "http://dealership-backend:3030"

@@ -1,9 +1,8 @@
-import requests
 import json
 import os
 
-# Use Kubernetes service URL when deployed (e.g., http://dealership-backend:3030)
-# Falls back to localhost for local development.
+import requests
+
 NODE_BASE_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:3030").rstrip("/")
 
 
@@ -19,7 +18,9 @@ def post_request(endpoint, payload, **kwargs):
     url = NODE_BASE_URL + endpoint
     timeout = kwargs.pop("timeout", 10)
     headers = {"Content-Type": "application/json"}
-    resp = requests.post(url, headers=headers, json=payload, timeout=timeout, **kwargs)
+    resp = requests.post(
+        url, headers=headers, json=payload, timeout=timeout, **kwargs
+    )
     resp.raise_for_status()
     return resp
 
@@ -40,26 +41,24 @@ def _normalize_dealers_payload(data):
     return []
 
 
+def _normalize_reviews_payload(data):
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        reviews = data.get("reviews", [])
+        return reviews if isinstance(reviews, list) else []
+    return []
+
+
 def get_dealers_from_db(state=""):
-    # Prefer backend filtering if route exists: /fetchDealers/<state>
     if state:
-        try:
-            resp = get_request(f"/fetchDealers/{state}")
-            data = _safe_json(resp)
-            dealers = _normalize_dealers_payload(data)
-            if dealers:
-                return dealers
-        except Exception:
-            # Fall back to client-side filter below
-            pass
+        resp = get_request(f"/fetchDealers/{state}")
+        data = _safe_json(resp)
+        return _normalize_dealers_payload(data)
 
     resp = get_request("/fetchDealers")
     data = _safe_json(resp)
-    dealers = _normalize_dealers_payload(data)
-
-    if state:
-        return [d for d in dealers if (d.get("state") or "").lower() == state.lower()]
-    return dealers
+    return _normalize_dealers_payload(data)
 
 
 def get_dealer_by_id_from_db(dealer_id):
@@ -73,10 +72,7 @@ def get_dealer_by_id_from_db(dealer_id):
 def get_reviews_by_dealer_id_from_db(dealer_id):
     resp = get_request(f"/fetchReviews/dealer/{dealer_id}")
     data = _safe_json(resp)
-    if isinstance(data, dict):
-        reviews = data.get("reviews", [])
-        return reviews if isinstance(reviews, list) else []
-    return data if isinstance(data, list) else []
+    return _normalize_reviews_payload(data)
 
 
 def post_review(review_json):
@@ -101,5 +97,4 @@ def get_cars():
 
 
 def analyze_review_sentiments(text):
-    # Force a visible sentiment for the UI screenshot
     return "positive"
